@@ -1157,13 +1157,17 @@ app.get("/attendance/history", async (req, res) => {
 });
 
 
+
+
+
 app.get("/pyq", (req, res) => {
   res.render("pyq/pyq_index.ejs");
 });
 
+const PORT = process.env.PORT || 9010;
 
-app.listen(process.env.PORT,() => {
-  console.log("app is listen on port 9010");
+app.listen(PORT, () => {
+  console.log(`app is listen on port ${PORT}`);
 });     
 
      
