@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head><%- include('../partials/head', { title: 'Dashboard' }) %></head>
+
+<body>
+
+  <%- include('../partials/navbar', { page: 'dashboard' , user: typeof user !=='undefined' ? user : { username: 'Rahul'
+    } }) %>
+
+    <main class="container-fluid px-4 py-4" style="max-width:1280px;">
+
+      <!-- Page Header -->
+      <div class="d-flex flex-wrap align-items-center justify-content-between mb-4 gap-3">
+        <div>
+          <h2 class="fw-bold mb-0" style="font-family:'Poppins',sans-serif;color:#1a3a5c;">
+            Good morning, <%= typeof user !=='undefined' ? user.username : 'Rahul' %> 👋
+          </h2>
+          <p class="text-muted mb-0 small mt-1">
+            <i class="bi bi-calendar3 me-1"></i>
+            <%= new Date().toLocaleDateString('en-IN', { weekday:'long', year:'numeric', month:'long', day:'numeric' })
+              %>
+          </p>
+        </div>
+        <a href="/attendance/mark" class="btn btn-primary d-flex align-items-center gap-2">
+          <i class="bi bi-clipboard2-plus"></i> Mark Today's Attendance
+        </a>
+      </div>
+
+      <!-- Stat Cards Row -->
+      <div class="row g-4 mb-4">
+
+        <!-- Overall Attendance -->
+        <div class="col-sm-6 col-lg-4">
+          <div class="card stat-card h-100 p-4">
+            <div class="d-flex align-items-start justify-content-between mb-3">
+              <div>
+                <p class="text-muted small fw-semibold mb-1 text-uppercase" style="letter-spacing:.5px;">
+                  Biometric from  <b class="text-primary"><%= new Date(stats.semStartDate).toLocaleDateString("en-GB", { day: "numeric" ,
+                    month: "long" , year: "numeric" }) %></b>
+                </p>
+                <h2 class="fw-bold mb-0" style="font-family:'Poppins',sans-serif;font-size:2.4rem;color:#2563eb;">
+                  <%= typeof stats !=='undefined' ? stats.biometric : '74' %>%
+                </h2>
+              </div>
+              <div class="stat-icon" style="background:#dbeafe;color:#2563eb;">
+                <i class="bi bi-graph-up-arrow"></i>
+              </div>
+            </div>
+            <div class="progress mb-2">
+              <div class="progress-bar" style="width:<%= typeof stats !== 'undefined' ? stats.biometric : '74' %>%">
+              </div>
+            </div>
+            <div class="d-flex align-items-center gap-1">
+              <span class="badge rounded-pill" style="background:#fef3c7;color:#92400e;font-size:.75rem;">
+                <i class="bi bi-exclamation-triangle me-1"></i>Below 75%
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Classes Needed -->
+        <div class="col-sm-6 col-lg-4">
+          <div class="card stat-card h-100 p-4">
+            <div class="d-flex align-items-start justify-content-between mb-3">
+              <div>
+                <p class="text-muted small fw-semibold mb-1 text-uppercase" style="letter-spacing:.5px;">Classes Needed
+                </p>
+                <h2 class="fw-bold mb-0" style="font-family:'Poppins',sans-serif;font-size:2.4rem;color:#f59e0b;">
+                  <%= typeof stats !=='undefined' ? stats.needClasses : '2' %>
+                </h2>
+              </div>
+              <div class="stat-icon" style="background:#fef3c7;color:#d97706;">
+                <i class="bi bi-clock-history"></i>
+              </div>
+            </div>
+            <p class="text-muted small mb-0">
+              Attend <strong>
+                <%= typeof stats !=='undefined' ? stats.needClasses : '2' %> more classes
+              </strong> to reach the 75% threshold
+            </p>
+          </div>
+        </div>
+
+        <!-- Semester Progress -->
+        <div class="col-sm-6 col-lg-4">
+          <div class="card stat-card h-100 p-4">
+            <div class="d-flex align-items-start justify-content-between mb-3">
+              <div>
+                <p class="text-muted small fw-semibold mb-1 text-uppercase" style="letter-spacing:.5px;">Semester
+                  Progress</p>
+                <h2 class="fw-bold mb-0" style="font-family:'Poppins',sans-serif;font-size:2.4rem;color:#10b981;">
+                  <%= typeof stats !=='undefined' ? stats.remainingDays : '75' %>
+                </h2>
+              </div>
+              <div class="stat-icon" style="background:#d1fae5;color:#059669;">
+                <i class="bi bi-calendar-range"></i>
+              </div>
+            </div>
+            <p class="text-muted small mb-0">
+              Days remaining in current semester
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <div class="row g-4">
+        <!-- Subjects Section -->
+        <div class="col-lg-7">
+          <div class="card p-4">
+            <div class="d-flex align-items-center justify-content-between mb-4">
+              <h5 class="section-title mb-0"><i class="bi bi-book me-2 text-primary"></i>My Subjects</h5>
+              <a href="/subjects/new" class="btn btn-outline-primary btn-sm d-flex align-items-center gap-1">
+                <i class="bi bi-plus-lg"></i> Add Subject
+              </a>
+            </div>
+
+            <div class="d-flex flex-column gap-3">
+              <% const sampleSubjects=typeof subjects !=='undefined' ? subjects : [ { name: 'Mathematics' , attendance:
+                78, classesToday: '10:00 AM' }, { name: 'Physics' , attendance: 72, classesToday: '2:00 PM' }, {
+                name: 'Chemistry' , attendance: 75, classesToday: null }, { name: 'Data Structures' , attendance: 81,
+                classesToday: '4:00 PM' }, ]; %>
+                <% sampleSubjects.forEach(function(sub) { %>
+                  <% const pct=sub.finalPercent; const barColor=pct>= 75 ? '#10b981' : pct >= 70 ? '#f59e0b' :
+                    '#ef4444';
+                    const badgeBg = pct >= 75 ? '#d1fae5' : pct >= 70 ? '#fef3c7' : '#fee2e2';
+                    const badgeTxt = pct >= 75 ? '#065f46' : pct >= 70 ? '#92400e' : '#991b1b';
+                    %>
+                    <div class="d-flex align-items-center gap-3 p-3 rounded-3"
+                      style="background:#f8faff;border:1.5px solid #e8f0fe;">
+                      <div class="rounded-3 d-flex align-items-center justify-content-center flex-shrink-0"
+                        style="width:44px;height:44px;background:linear-gradient(135deg,#2563eb,#60a5fa);color:#fff;font-size:18px;">
+                        <i class="bi bi-journal-text"></i>
+                      </div>
+                      <div class="flex-grow-1 min-w-0">
+                        <div class="d-flex justify-content-between align-items-center mb-1">
+                          <span class="fw-semibold text-truncate" style="color:#1e293b;">
+                            <%= sub.subjectName %>
+                          </span>
+                          <span class="fw-bold ms-2 flex-shrink-0" style="color:<%= barColor %>">
+                            <%= pct %>%
+                          </span>
+                        </div>
+                        <div class="progress" style="height:6px;">
+                          <div class="progress-bar" style="width:<%= pct %>%;background:<%= barColor %>;"></div>
+                        </div>
+                      </div>
+                      <span class="badge rounded-pill flex-shrink-0"
+                        style="background:<%= badgeBg %>;color:<%= badgeTxt %>;font-size:.72rem;">
+                        <%= pct>= 75 ? '✓ Safe' : pct >= 70 ? '⚠ Caution' : '✗ Critical' %>
+                      </span>
+                    </div>
+                    <% }); %>
+            </div>
+
+            <a href="/subjects" class="btn btn-outline-primary w-100 mt-3 btn-sm">View All Subjects <i
+                class="bi bi-arrow-right ms-1"></i></a>
+          </div>
+        </div>
+
+        <!-- Right Column -->
+        <div class="col-lg-5 d-flex flex-column gap-4">
+
+          <!-- Upcoming Classes -->
+          <div class="card p-4">
+            <h5 class="section-title mb-4"><i class="bi bi-clock me-2 text-primary"></i>Today's Classes</h5>
+            <% const upcoming=typeof todayClasses !=='undefined' ? todayClasses : [ { name: 'Mathematics' ,
+              time: '10:00 AM' , room: 'Room 201' }, { name: 'Physics' , time: '2:00 PM' , room: 'Lab 3' }, {
+              name: 'Data Structures' ,time: '4:00 PM' , room: 'Room 105' }, ]; %>
+              <div class="d-flex flex-column gap-3">
+                <% upcoming.forEach(function(cls, idx) { %>
+                  <div class="d-flex align-items-center gap-3">
+                    <div class="d-flex flex-column align-items-center" style="min-width:52px;">
+                      <span class="fw-bold text-primary" style="font-size:.85rem;line-height:1.2;">
+                        <%= cls.startTime %>
+                      </span>
+                    </div>
+                    <div
+                      style="width:2px;height:36px;background:linear-gradient(#2563eb,#93c5fd);border-radius:2px;flex-shrink:0;">
+                    </div>
+                    <div>
+                      <div class="fw-semibold" style="color:#1e293b;font-size:.9rem;">
+                        <%= cls.name %>
+                      </div>
+                      <div class="text-muted" style="font-size:.78rem;"><i class="bi bi-geo-alt me-1"></i>
+                        <%= cls.apnaClass %>
+                      </div>
+                    </div>
+                  </div>
+                  <% }); %>
+              </div>
+          </div>
+
+          <!-- Quick Actions -->
+          <div class="card p-4">
+            <h5 class="section-title mb-3"><i class="bi bi-lightning me-2 text-primary"></i>Quick Actions</h5>
+            <div class="d-grid gap-2">
+              <a href="/attendance/mark" class="btn btn-primary d-flex align-items-center justify-content-center gap-2">
+                <i class="bi bi-check2-square"></i> Mark Attendance
+              </a>
+              <a href="/attendance/history"
+                class="btn btn-outline-primary d-flex align-items-center justify-content-center gap-2">
+                <i class="bi bi-clock-history"></i> View History
+              </a>
+              <a href="/semester/setup"
+                class="btn btn-outline-secondary d-flex align-items-center justify-content-center gap-2">
+                <i class="bi bi-calendar-event"></i> Semester Setup
+              </a>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </main>
+
+    <%- include('../partials/footer') %>
+      <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+
+</html>

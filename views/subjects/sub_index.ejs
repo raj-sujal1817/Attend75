@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="en">
+<head><%- include('../partials/head', { title: 'Subjects' }) %></head>
+<body>
+
+<%- include('../partials/navbar', { page: 'subjects', user: typeof user !== 'undefined' ? user : { username: 'Rahul' } }) %>
+
+<main class="container-fluid px-4 py-4" style="max-width:1200px;">
+
+  <div class="d-flex flex-wrap align-items-center justify-content-between mb-4 gap-3">
+    <div>
+      <h2 class="fw-bold mb-0" style="font-family:'Poppins',sans-serif;color:#1a3a5c;">My Subjects</h2>
+      <p class="text-muted mb-0 small">Based on all scheduled classes this semester.</p>
+    </div>
+    <a href="/subjects/new" class="btn btn-primary d-flex align-items-center gap-2">
+      <i class="bi bi-plus-lg"></i> New Subject
+    </a>
+  </div>
+
+  <% if (typeof success !== 'undefined' && success) { %>
+    <div class="alert alert-success alert-dismissible fade show rounded-3 mb-4" role="alert">
+      <i class="bi bi-check-circle-fill me-2"></i>
+      <%= success %>
+      <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+  <% } %>
+
+  <% if (typeof error !== 'undefined' && error) { %>
+    <div class="alert alert-danger alert-dismissible fade show rounded-3 mb-4" role="alert">
+      <i class="bi bi-exclamation-circle-fill me-2"></i>
+      <%= error %>
+      <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+  <% } %>
+
+  <%
+    const subjects = typeof subjectsList !== 'undefined' ? subjectsList : [
+      { _id: '1', name: 'Mathematics',     classesPerWeek: 3, currentAttendance: 78,
+        schedule: [
+          { day: 'Monday',    start: '09:00', end: '10:00' },
+          { day: 'Wednesday', start: '09:00', end: '10:00' },
+          { day: 'Friday',    start: '09:00', end: '10:00' }
+        ]
+      },
+      { _id: '2', name: 'Physics',         classesPerWeek: 2, currentAttendance: 72,
+        schedule: [
+          { day: 'Tuesday',  start: '11:00', end: '12:00' },
+          { day: 'Thursday', start: '11:00', end: '12:00' }
+        ]
+      },
+      { _id: '3', name: 'Data Structures', classesPerWeek: 4, currentAttendance: 81,
+        schedule: [
+          { day: 'Monday',    start: '14:00', end: '15:00' },
+          { day: 'Tuesday',   start: '14:00', end: '15:00' },
+          { day: 'Thursday',  start: '14:00', end: '15:00' },
+          { day: 'Saturday',  start: '10:00', end: '11:00' }
+        ]
+      },
+    ];
+
+    // Helper: format "09:00" → "9:00 AM"
+    function fmtTime(t) {
+      if (!t) return '';
+      const [hh, mm] = t.split(':').map(Number);
+      const ampm = hh >= 12 ? 'PM' : 'AM';
+      const h = hh % 12 || 12;
+      return `${h}:${String(mm).padStart(2,'0')} ${ampm}`;
+    }
+  %>
+
+  <!-- ── Desktop View: Table ─────────────────────────────────────── -->
+  <div class="card d-none d-lg-block">
+    <% if (subjects && subjects.length > 0) { %>
+      <table class="table mb-0 align-middle">
+        <thead>
+          <tr>
+            <th style="width:25%;"><i class="bi bi-journal-text me-1"></i> Subject Name</th>
+            <th style="width:12%;"><i class="bi bi-calendar3 me-1"></i> Classes/Week</th>
+            <th style="width:30%;"><i class="bi bi-clock me-1"></i> Schedule</th>
+            <th style="width:18%;"><i class="bi bi-graph-up me-1"></i> Attendance</th>
+            <th style="width:15%;"><i class="bi bi-gear me-1"></i> Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% subjects.forEach(function(sub) {
+               const att      = sub.finalPercent;
+               const attColor = att >= 75 ? '#10b981' : att >= 70 ? '#f59e0b' : '#ef4444';
+               const sched    = sub.schedule || [];
+          %>
+            <tr class="subject-row">
+              <td>
+                <span class="fw-semibold" style="color:#1e293b;"><%= sub.name %></span>
+              </td>
+              <td>
+                <span class="badge rounded-pill" style="background:#dbeafe;color:#1e40af;">
+                  <%= sub.classesPerWeek %> classes
+                </span>
+              </td>
+              <td>
+                <% if (sched.length > 0) { %>
+                  <div class="d-flex flex-column gap-1">
+                    <% sched.forEach(function(s) { %>
+                      <span style="font-size:.78rem;color:#374151;">
+                        <span class="badge rounded-pill me-1" style="background:#ede9fe;color:#5b21b6;font-size:.7rem;font-weight:600;">
+                          <%= s.day.substring(0,3) %>
+                        </span>
+                        <%= fmtTime(s.start) %> – <%= fmtTime(s.end) %>
+                      </span>
+                    <% }); %>
+                  </div>
+                <% } else { %>
+                  <span class="text-muted" style="font-size:.8rem;">—</span>
+                <% } %>
+              </td>
+              <td>
+                <div class="d-flex align-items-center gap-2">
+                  <div style="flex:1;max-width:100px;">
+                    <div class="progress" style="height:6px;">
+                      <div class="progress-bar" style="width:<%= att %>%;background:<%= attColor %>;"></div>
+                    </div>
+                  </div>
+                  <span class="fw-bold" style="color:<%= attColor %>;min-width:40px;"><%= att %>%</span>
+                </div>
+              </td>
+              <td>
+                <div class="d-flex align-items-center gap-2">
+                  <a href="/subjects/<%= sub._id %>/edit" class="btn btn-outline-primary btn-sm">
+                    <i class="bi bi-pencil"></i> Edit
+                  </a>
+                  
+                    <button type="submit" class="btn btn-danger btn-sm del-icon" onclick="deleteSubject('<%= sub._id %>', '<%= sub.name %>')">
+                      <i class="bi bi-trash"></i>
+                    </button>
+                
+                </div>
+              </td>
+            </tr>
+          <% }); %>
+        </tbody>
+      </table>
+    <% } else { %>
+      <div class="p-5 text-center">
+        <div style="font-size:3rem;opacity:0.3;margin-bottom:1rem;"><i class="bi bi-inbox"></i></div>
+        <p class="text-muted fw-semibold">No subjects yet</p>
+        <p class="text-muted small mb-3">Start by adding your first subject to begin tracking attendance</p>
+        <a href="/subjects/new" class="btn btn-primary">
+          <i class="bi bi-plus-lg me-1"></i> Add Your First Subject
+        </a>
+      </div>
+    <% } %>
+  </div>
+
+  <!-- ── Mobile View: Cards ──────────────────────────────────────── -->
+  <div class="d-lg-none">
+    <% if (subjects && subjects.length > 0) { %>
+      <div class="d-grid gap-3">
+        <% subjects.forEach(function(sub) {
+             const att    = sub.finalPercent;
+             const attColor = att >= 75 ? '#10b981' : att >= 70 ? '#f59e0b' : '#ef4444';
+             const attBg    = att >= 75 ? '#d1fae5' : att >= 70 ? '#fef3c7' : '#fee2e2';
+             const attTxt   = att >= 75 ? '#065f46' : att >= 70 ? '#92400e' : '#991b1b';
+             const sched    = sub.schedule || [];
+        %>
+          <div class="card p-4">
+            <!-- Header row -->
+            <div class="d-flex justify-content-between align-items-start mb-2">
+              <div>
+                <h6 class="fw-semibold mb-1 text-truncate" style="color:#1e293b;"><%= sub.name %></h6>
+                <span class="badge rounded-pill" style="background:#dbeafe;color:#1e40af;font-size:.7rem;">
+                  <i class="bi bi-calendar3 me-1"></i><%= sub.classesPerWeek %> classes/week
+                </span>
+              </div>
+              <span class="badge rounded-pill" style="background:<%= attBg %>;color:<%= attTxt %>;font-weight:700;">
+                <%= att %>%
+              </span>
+            </div>
+
+            <!-- Schedule pills -->
+            <% if (sched.length > 0) { %>
+              <div class="d-flex flex-column gap-1 mb-3 p-2 rounded-2" style="background:#f8faff;border:1px solid #e0eaff;">
+                <div class="text-muted mb-1" style="font-size:.72rem;font-weight:600;text-transform:uppercase;letter-spacing:.05em;">
+                  <i class="bi bi-clock me-1"></i>Schedule
+                </div>
+                <% sched.forEach(function(s) { %>
+                  <div style="font-size:.8rem;color:#374151;">
+                    <span class="badge rounded-pill me-1" style="background:#ede9fe;color:#5b21b6;font-size:.7rem;font-weight:600;">
+                      <%= s.day.substring(0,3) %>
+                    </span>
+                    <%= fmtTime(s.start) %> – <%= fmtTime(s.end) %>
+                  </div>
+                <% }); %>
+              </div>
+            <% } %>
+
+            <!-- Attendance bar -->
+            <div class="progress mb-3" style="height:8px;">
+              <div class="progress-bar" style="width:<%= att %>%;background:<%= attColor %>;"></div>
+            </div>
+
+            <!-- Actions -->
+            <div class="d-grid gap-2">
+              <a href="/subjects/<%= sub._id %>/edit" class="btn btn-outline-primary btn-sm">
+                <i class="bi bi-pencil me-1"></i> Edit
+              </a>
+              <button class="btn btn-danger btn-sm" onclick="deleteSubject('<%= sub._id %>', '<%= sub.name %>')">
+                <i class="bi bi-trash me-1"></i> Delete
+              </button>
+            </div>
+          </div>
+        <% }); %>
+      </div>
+    <% } else { %>
+      <div class="card p-5 text-center">
+        <div style="font-size:3rem;opacity:0.3;margin-bottom:1rem;"><i class="bi bi-inbox"></i></div>
+        <p class="text-muted fw-semibold">No subjects yet</p>
+        <p class="text-muted small mb-3">Start by adding your first subject to begin tracking attendance</p>
+        <a href="/subjects/new" class="btn btn-primary w-100">
+          <i class="bi bi-plus-lg me-1"></i> Add Your First Subject
+        </a>
+      </div>
+    <% } %>
+  </div>
+
+</main>
+
+<%- include('../partials/footer') %>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+  function deleteSubject(id, name) {
+    if (confirm(`Are you sure you want to delete "${name}"? This cannot be undone.`)) {
+      const form = document.createElement('form');
+      form.method = 'POST';
+      form.action = `/subjects/${id}/delete`;
+      const method = document.createElement('input');
+      method.type = 'hidden';
+      method.name = '_method';
+      method.value = 'DELETE';
+      form.appendChild(method);
+      document.body.appendChild(form);
+       form.submit();
+    }
+  }
+</script>
+</body>
+</html>

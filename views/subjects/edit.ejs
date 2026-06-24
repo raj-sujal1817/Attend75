@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="en">
+<head><%- include('../partials/head', { title: 'Edit Subject' }) %></head>
+<body>
+
+<%- include('../partials/navbar', { page: 'subjects', user: typeof user !== 'undefined' ? user : { username: 'Rahul' } }) %>
+
+<main class="container py-5" style="max-width:600px;">
+
+  <div class="mb-4">
+    <a href="/subjects" class="text-decoration-none text-muted small d-flex align-items-center gap-1 mb-3">
+      <i class="bi bi-arrow-left"></i> Back to Subjects
+    </a>
+    <h2 class="fw-bold mb-1" style="font-family:'Poppins',sans-serif;color:#1a3a5c;">Edit Subject</h2>
+    <p class="text-muted mb-0">Update subject details and track information.</p>
+  </div>
+
+  <div class="card p-4 p-md-5">
+
+    <% if (typeof error !== 'undefined' && error) { %>
+      <div class="alert alert-danger d-flex align-items-center gap-2 rounded-3 mb-4">
+        <i class="bi bi-exclamation-circle-fill text-danger"></i>
+        <%= error %>
+      </div>
+    <% } %>
+
+    <%
+      const Sub = typeof subject !== 'undefined' ? subject : {
+        _id: '1',
+        name: 'Data Structures',
+        classesPerWeek: 3,
+        schedule: []
+      };
+      const existingSchedule = (subject.schedule && subject.schedule.length > 0)
+        ? subject.schedule
+        : [];
+    %>
+
+    <form action="/subjects/<%= subject._id %>" method="POST" novalidate id="editSubjectForm">
+      <input type="hidden" name="_method" value="PUT">
+
+      <!-- Subject Name -->
+      <div class="mb-4">
+        <label class="form-label" for="subjectName">
+          <i class="bi bi-journal-text me-1 text-primary"></i> Subject Name
+        </label>
+        <input
+          type="text"
+          name="subjectName"
+          id="subjectName"
+          class="form-control form-control-lg"
+          value="<%= subject.name %>"
+          required
+        >
+        <div class="form-text">The name of your subject</div>
+      </div>
+
+      <!-- Classes Per Week -->
+      <div class="mb-4">
+        <label class="form-label" for="classesPerWeek">
+          <i class="bi bi-calendar3 me-1 text-primary"></i> Classes Per Week
+        </label>
+        <div class="input-group input-group-lg">
+          <button class="btn btn-outline-primary" type="button" onclick="decrementClasses()">
+            <i class="bi bi-dash"></i>
+          </button>
+          <input
+            type="number"
+            name="classesPerWeek"
+            id="classesPerWeek"
+            class="form-control text-center fw-bold"
+            value="<%= subject.classesPerWeek %>"
+            min="1"
+            max="14"
+            required
+          >
+          <button class="btn btn-outline-primary" type="button" onclick="incrementClasses()">
+            <i class="bi bi-plus"></i>
+          </button>
+        </div>
+        <div class="form-text">Number of classes per week (1–14). Schedule slots will update below.</div>
+      </div>
+
+      <!-- Schedule Section -->
+      <div id="scheduleSection">
+        <hr class="my-3">
+        <p class="fw-semibold mb-3" style="font-size:.95rem;color:#1a3a5c;">
+          <i class="bi bi-clock me-1 text-primary"></i> Weekly Schedule
+        </p>
+
+        <div id="overlapBanner" class="alert alert-danger d-none align-items-center gap-2 rounded-3 mb-3 py-2" style="font-size:.85rem;">
+          <i class="bi bi-exclamation-triangle-fill"></i>
+          <span>Some time slots overlap on the same day. Please fix them before saving.</span>
+        </div>
+
+        <div id="scheduleRows"></div>
+      </div>
+
+      <!-- Stats Card -->
+      <div class="rounded-3 p-3 mb-4 mt-3" style="background:#f0f6ff;border:1.5px solid #bfdbfe;">
+        <p class="fw-semibold text-primary mb-2 small"><i class="bi bi-bar-chart me-1"></i>Subject Statistics</p>
+        <div class="row text-center g-2">
+          <div class="col">
+            <div class="fw-bold" style="color:#1a3a5c;font-size:1.1rem;"><%= typeof stats !== 'undefined' ? stats[0].finalClasses : '24' %></div>
+            <div class="text-muted" style="font-size:.75rem;">Total Classes</div>
+          </div>
+          <div class="col">
+            <div class="fw-bold text-success" style="font-size:1.1rem;"><%= typeof stats !== 'undefined' ? stats[0].attendClasses : '18' %></div>
+            <div class="text-muted" style="font-size:.75rem;">Classes Attended</div>
+          </div>
+          <div class="col">
+            <div class="fw-bold text-danger" style="font-size:1.1rem;"><%= typeof stats !== 'undefined' ? stats[0].missedClasses : '6' %></div>
+            <div class="text-muted" style="font-size:.75rem;">Classes Missed</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="d-grid gap-2">
+        <button type="submit" class="btn btn-primary btn-lg" id="saveBtn">
+          <i class="bi bi-check-lg me-2"></i>Save Changes
+        </button>
+        <a href="/subjects" class="btn btn-outline-secondary btn-lg">Cancel</a>
+      </div>
+    </form>
+  </div>
+</main>
+
+<%- include('../partials/footer') %>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+  // Existing schedule data from server (EJS injects it as JS array)
+  const serverSchedule = <%- JSON.stringify(existingSchedule) %>;
+
+  const DAYS = ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'];
+
+  function incrementClasses() {
+    const el = document.getElementById('classesPerWeek');
+    const val = parseInt(el.value) || 0;
+    if (val < 14) { el.value = val + 1; renderSchedule(val + 1); }
+  }
+  function decrementClasses() {
+    const el = document.getElementById('classesPerWeek');
+    const val = parseInt(el.value) || 0;
+    if (val > 1) { el.value = val - 1; renderSchedule(val - 1); }
+  }
+
+  document.getElementById('classesPerWeek').addEventListener('input', function () {
+    let v = parseInt(this.value) || 0;
+    if (v > 14) { this.value = 14; v = 14; }
+    if (v < 1)  { this.value = 1;  v = 1; }
+    renderSchedule(v);
+  });
+
+  function getExisting() {
+    return Array.from(document.querySelectorAll('.sched-row')).map(r => ({
+      day:   r.querySelector('.sched-day').value,
+      start: r.querySelector('.sched-start').value,
+      end:   r.querySelector('.sched-end').value,
+    }));
+  }
+
+  function renderSchedule(count) {
+    const container = document.getElementById('scheduleRows');
+    // Use currently-entered values if rows already exist, else fall back to server data
+    const liveRows = getExisting();
+    const source = liveRows.length > 0 ? liveRows : serverSchedule;
+
+    container.innerHTML = '';
+
+    for (let i = 0; i < count; i++) {
+      const saved = source[i] || {};
+      const dayOptions = DAYS.map(d =>
+        `<option value="${d}"${saved.day === d ? ' selected' : ''}>${d}</option>`
+      ).join('');
+
+      const row = document.createElement('div');
+      row.className = 'sched-row rounded-3 p-3 mb-2';
+      row.style.cssText = 'background:#f8faff;border:1.5px solid #e0eaff;';
+      row.innerHTML = `
+        <div class="d-flex align-items-center gap-2 mb-2">
+          <span class="badge bg-primary rounded-pill" style="font-size:.75rem;">Class ${i+1}</span>
+        </div>
+        <div class="row g-2 align-items-end">
+          <div class="col-12 col-sm-5">
+            <label class="form-label mb-1" style="font-size:.8rem;">Day</label>
+            <select class="form-select form-select-sm sched-day" name="schedule[${i}][day]">${dayOptions}</select>
+          </div>
+          <div class="col-6 col-sm-3">
+            <label class="form-label mb-1" style="font-size:.8rem;">Start Time</label>
+            <input type="time" class="form-control form-control-sm sched-start" name="schedule[${i}][start]" value="${saved.start || ''}">
+          </div>
+          <div class="col-6 col-sm-3">
+            <label class="form-label mb-1" style="font-size:.8rem;">End Time</label>
+            <input type="time" class="form-control form-control-sm sched-end" name="schedule[${i}][end]" value="${saved.end || ''}">
+          </div>
+        </div>
+        <div class="sched-overlap-msg mt-2" style="display:none;font-size:.8rem;color:#dc3545;">
+          <i class="bi bi-exclamation-circle me-1"></i><span></span>
+        </div>`;
+      container.appendChild(row);
+
+      row.querySelector('.sched-day').addEventListener('change', validateOverlap);
+      row.querySelector('.sched-start').addEventListener('change', validateOverlap);
+      row.querySelector('.sched-end').addEventListener('change', validateOverlap);
+    }
+
+    validateOverlap();
+  }
+
+  function toMins(t) {
+    if (!t) return null;
+    const [h, m] = t.split(':').map(Number);
+    return h * 60 + m;
+  }
+
+  function validateOverlap() {
+    const rows = Array.from(document.querySelectorAll('.sched-row'));
+    let hasError = false;
+
+    rows.forEach(r => {
+      r.style.borderColor = '#e0eaff';
+      const msg = r.querySelector('.sched-overlap-msg');
+      msg.style.display = 'none';
+      msg.querySelector('span').textContent = '';
+    });
+
+    const slots = rows.map(r => ({
+      el:    r,
+      day:   r.querySelector('.sched-day').value,
+      start: toMins(r.querySelector('.sched-start').value),
+      end:   toMins(r.querySelector('.sched-end').value),
+    }));
+
+    slots.forEach((a, i) => {
+      if (a.start !== null && a.end !== null && a.end <= a.start) {
+        markError(a.el, 'End time must be after start time.');
+        hasError = true;
+      }
+      for (let j = i + 1; j < slots.length; j++) {
+        const b = slots[j];
+        if (a.start === null || a.end === null || b.start === null || b.end === null) continue;
+        if (a.day !== b.day) continue;
+        if (a.start >= a.end || b.start >= b.end) continue;
+        if (a.start < b.end && b.start < a.end) {
+          markError(a.el, `Overlaps with Class ${j+1} on ${a.day}.`);
+          markError(b.el, `Overlaps with Class ${i+1} on ${b.day}.`);
+          hasError = true;
+        }
+      }
+    });
+
+    const banner = document.getElementById('overlapBanner');
+    if (hasError) { banner.classList.remove('d-none'); banner.classList.add('d-flex'); }
+    else          { banner.classList.add('d-none');    banner.classList.remove('d-flex'); }
+    document.getElementById('saveBtn').disabled = hasError;
+  }
+
+  function markError(el, msg) {
+    el.style.borderColor = '#f87171';
+    const msgEl = el.querySelector('.sched-overlap-msg');
+    msgEl.style.display = 'block';
+    if (!msgEl.querySelector('span').textContent)
+      msgEl.querySelector('span').textContent = msg;
+  }
+
+  document.getElementById('editSubjectForm').addEventListener('submit', function(e) {
+    validateOverlap();
+    if (document.getElementById('saveBtn').disabled) e.preventDefault();
+  });
+
+  // Boot: render rows using server-saved schedule
+  renderSchedule(parseInt(document.getElementById('classesPerWeek').value) || 1);
+</script>
+</body>
+</html>
