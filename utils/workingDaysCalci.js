@@ -1,10 +1,13 @@
 // Total workingdays calculator ...
 
 function getWorkingDays(startDate) {
-  let start = new Date(startDate);
+  const start = new Date(startDate);
   start.setHours(0,0,0,0);
-  let today = new Date();
-  today.setHours(0,0,0,0);
+  console.log("SEM START DATE : ", start);
+  const today = new Date();
+  today.setHours(0,0,0,0); 
+
+  console.log("NEW DATE : ", today);
   
   let workingDays = 0;
 

@@ -55,7 +55,7 @@ dailyMarkSchema.index(
   },
 
   {
-    unique: true
+    unique: true  
   }
 );
 

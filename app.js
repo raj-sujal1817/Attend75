@@ -229,9 +229,6 @@ app.post("/semester/setup", async (req, res) => {
 
     const semInfo = await semester.findOneAndUpdate(
 
-
-
-
       {
         user: req.session.userId
       },
@@ -249,16 +246,16 @@ app.post("/semester/setup", async (req, res) => {
       }
     );
 
-    const subjects = await userSubject.find({ user: req.session.userId});
+    // const subjects = await userSubject.find({ user: req.session.userId});
 
-    for(let sub of subjects) {
-      const totalClasses = await calculateTotalClasses(sub,semInfo);
-      console.log("HERE is present data of how many classes of each subject by each sub");
-      console.log(totalClasses);
-      sub.totalClasses = totalClasses;
+    // for(let sub of subjects) {
+    //   const totalClasses = await calculateTotalClasses(sub,semInfo);
+    //   console.log("HERE is present data of how many classes of each subject by each sub");
+    //   // console.log(totalClasses);
+    //   sub.totalClasses = totalClasses;
 
-      await sub.save();
-    }
+    //   await sub.save();
+    // }
 
     res.redirect("/dashboard");
 
@@ -285,6 +282,8 @@ app.get("/dashboard", async (req, res) => {
     const userId = req.session.userId;
 
     const subjects = await userSubject.find({user: userId});
+
+    // console.log(subjects);
 
 
 
@@ -317,7 +316,7 @@ app.get("/dashboard", async (req, res) => {
             subjectId: subject._id,
             name: subject.name,
             startTime: cls.start,
-            endTime: cls.end,
+            // endTime: cls.end,
             apnaClass: room,
             
 
@@ -371,27 +370,27 @@ app.get("/dashboard", async (req, res) => {
 
         dashboardShow.push({
 
-        subjectId: subject._id,
+        // subjectId: subject._id,
 
         subjectName: subject.name,
 
-        totalClasses: subject.totalClasses,
+        // totalClasses: subject.totalClasses,
 
-        finalClasses : finalClasses,
+        // finalClasses : finalClasses,
 
         presentCount,
 
-        absentCount,
+        // absentCount,
 
-        holidayCount,
+        // holidayCount,
 
-        cancelCount,
+        // cancelCount,
 
         finalPercent: finalPercent.toFixed(1)
 
       });
 
-      console.log(dashboardShow);
+      // console.log(dashboardShow);
 
 
     }
@@ -399,11 +398,15 @@ app.get("/dashboard", async (req, res) => {
 
 
 
-    // Left days in Semester..
-
-
+    // Left days in Semester..2
 
     const semInfo = await semester.findOne({ user: userId});
+
+    if(!semInfo) {
+      return res.redirect("/semester/setup");
+    }
+
+
 
     let leftDays = 0;
     let passDays = 0;
@@ -414,20 +417,26 @@ app.get("/dashboard", async (req, res) => {
 
     console.log("exactDate : ", exactDate.toString());
 
-    if(semInfo){
-      
-      
+
+
       const endDate = new Date(semInfo.endDate);
       endDate.setHours(0,0,0,0);
       const startDate = new Date(semInfo.startDate);
       startDate.setHours(0,0,0,0);
 
+      console.log("SEM START DATE : ", startDate);
+
+
+    if(semInfo){
+      
       const diff = endDate - exactDate;
 
 
       leftDays = Math.ceil( diff / (1000*60*60*24));
 
     }
+
+    
 
 
 
@@ -442,29 +451,27 @@ app.get("/dashboard", async (req, res) => {
     // BIOMETRIC LOGIC.....
 
 
-    // finding total workingDays....
+    // finding total workingDays....1
 
-    const sem = await semester.findOne({
-      user: userId
-    });
+    // const sem = await semester.findOne({
+    //   user: userId
+    // });
 
-    if(!sem) {
-      return res.redirect("/semester/setup");
-    }
+    
 
 
-    const startingDate = sem.startDate
-    // console.log("Starting date of the semester : ",startingDate);
-    const endingDate = sem.endDate;
+    // const startingDate = semInfo.startDate
+    // // console.log("Starting date of the semester : ",startingDate);
+    // const endingDate = semInfo.endDate;
 
-    const ttotal = (endingDate - startingDate)/(1000 * 60 * 60 * 24);
+    // const ttotal = Math.ceil(endDate - startDate)/(1000 * 60 * 60 * 24);
     // console.log("ttotal :", ttotal);
 
-    const ttoday = ((exactDate) - (startingDate))/(1000 * 60 * 60 * 24);
+    // const ttoday = Math.ceil((exactDate) - (startDate))/(1000 * 60 * 60 * 24);
     // console.log("ttoday :", ttoday);
 
 
-    const workingDays = getWorkingDays(startingDate);
+    const workingDays = getWorkingDays(startDate);
     console.log("Working Days : ", workingDays);
 
     // console.log("workingDays:" ,workingDays);
@@ -519,15 +526,15 @@ app.get("/dashboard", async (req, res) => {
         biometric: biometricPercent.toFixed(1),
         needClasses: needDays,
         remainingDays: leftDays,
-        semStartDate : startingDate
+        semStartDate : startDate
       }
 
       console.log("bioDashInfo : ", bioDashInfo);
 
 
 
-      console.log(dashboardShow);
-    console.log(dailySchedule);
+    //   console.log(dashboardShow);
+    // console.log(dailySchedule);
 
     dailySchedule.sort((a,b) => {
       return a.startTime.localeCompare(b.startTime);
@@ -915,17 +922,22 @@ app.get("/attendance/mark", async (req, res) => {
   // console.log("user k saare subjects ka data....");
   // console.log(subjects); 
 
-  const today = new Date();
-  today.setHours(0,0,0,0);
+  const startOfDay = new Date();
+  startOfDay.setHours(0,0,0,0);
 
-  const todayMark = await dailyMark.find(
-    {
-      user: req.session.userId,
+  const endOfDay = new Date();
+  endOfDay.setHours(23,59,59,999);
 
-      date: today
+  const todayMark = await dailyMark.find({
+    
+  user: req.session.userId,
 
-    }
-  );
+  date: {
+    $gte: startOfDay,
+    $lte: endOfDay
+  }
+
+});
 
   
 
