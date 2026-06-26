@@ -1,46 +1,35 @@
-//Attendance Calculator ...//
+const { DateTime } = require("luxon");
+
+// Attendance Calculator
 
 function calculateTotalClasses(subject, semester) {
+
   let totalClasses = 0;
 
-  const startDate = new Date(semester.startDate);
-  const endDate = new Date(semester.endDate);
+  let currentDate = DateTime
+    .fromJSDate(semester.startDate)
+    .setZone("Asia/Kolkata")
+    .startOf("day");
 
-  // subject k saare class days se nikaalo...
-  const subjectDays = subject.schedule.map(
-    item => item.day
-  );
-  
-  // Start date ki copy banao
+  const endDate = DateTime
+    .fromJSDate(semester.endDate)
+    .setZone("Asia/Kolkata")
+    .startOf("day");
 
-  let currentDate = new Date(startDate);
-  
+  const subjectDays = subject.schedule.map(item => item.day);
+
   while (currentDate <= endDate) {
 
-    const currentDay = currentDate.toLocaleDateString(
-      "en-US",
-      {
-        weekday: "long"
-      }
-    );
+    const currentDay = currentDate.toFormat("cccc");
 
-    //Agar current day subject ke schedule me hai 
-    if(subjectDays.includes(currentDay)) {
+    if (subjectDays.includes(currentDay)) {
       totalClasses++;
     }
-    //next day
 
-    currentDate.setDate(
-      currentDate.getDate() + 1
-    );
+    currentDate = currentDate.plus({ days: 1 });
   }
+
   return totalClasses;
 }
 
 module.exports = calculateTotalClasses;
-
-
-
-
-
-

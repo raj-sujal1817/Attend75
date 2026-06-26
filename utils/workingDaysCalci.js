@@ -1,25 +1,31 @@
-// Total workingdays calculator ...
+const { DateTime } = require("luxon");
+
+// Total working days calculator
 
 function getWorkingDays(startDate) {
-  const start = new Date(startDate);
-  start.setHours(0,0,0,0);
-  console.log("SEM START DATE : ", start);
-  const today = new Date();
-  today.setHours(0,0,0,0); 
 
-  console.log("NEW DATE : ", today);
-  
+  let start = DateTime
+    .fromJSDate(startDate)
+    .setZone("Asia/Kolkata")
+    .startOf("day");
+
+  const today = DateTime
+    .now()
+    .setZone("Asia/Kolkata")
+    .startOf("day");
+
   let workingDays = 0;
 
-  while(start <= today) {
-    if(start.getDay()!==0) { //sunday = 0
+  while (start <= today) {
+
+    if (start.weekday !== 7) {   // Sunday = 7 in Luxon
       workingDays++;
     }
-    start.setDate(start.getDate() + 1);
+
+    start = start.plus({ days: 1 });
   }
 
   return workingDays;
-
 }
 
 module.exports = getWorkingDays;
