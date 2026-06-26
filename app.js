@@ -271,6 +271,18 @@ app.post("/semester/setup", async (req, res) => {
 
 
 
+app.get("/time-check", (req, res) => {
+  res.json({
+    now: new Date(),
+    iso: new Date().toISOString(),
+    local: new Date().toString(),
+    timezoneOffset: new Date().getTimezoneOffset()
+  });
+});
+
+
+
+
 
 // dashboard
 
