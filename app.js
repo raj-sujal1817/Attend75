@@ -7,6 +7,15 @@ const dns = require("dns");
 
 dns.setServers(["1.1.1.1", "8.8.8.8"]);
 
+const { 
+  nowIST,
+  nowISTDate,
+  startOfTodayIST,
+  endOfTodayIST,
+  formattedToday,
+  startOfDayIST,
+  endOfDayIST } = require("./utils/date");
+
 
 const bcrypt = require("bcrypt");
 const session = require("express-session");
@@ -315,8 +324,7 @@ app.get("/dashboard", async (req, res) => {
 
         // AAj ka day...
 
-        const todayDay = new Date().toLocaleDateString("en-US", {weekday: "long"});
-
+        const todayDay = nowIST().toFormat("cccc");
         // Srif Aaj Waali classes
 
         if(cls.day === todayDay){
@@ -424,17 +432,13 @@ app.get("/dashboard", async (req, res) => {
     let passDays = 0;
 
 
-    const exactDate = new Date();
-    exactDate.setHours(0,0,0,0);
-
-    console.log("exactDate : ", exactDate.toString());
+    const exactDate = startOfTodayIST();
+    console.log("exactDate : ", exactDate);
 
 
 
-      const endDate = new Date(semInfo.endDate);
-      endDate.setHours(0,0,0,0);
-      const startDate = new Date(semInfo.startDate);
-      startDate.setHours(0,0,0,0);
+      const endDate = startOfDayIST(semInfo.endDate);
+      const startDate = startOfDayIST(semInfo.startDate);
 
       console.log("SEM START DATE : ", startDate);
 
@@ -552,7 +556,7 @@ app.get("/dashboard", async (req, res) => {
       return a.startTime.localeCompare(b.startTime);
     });
 
-    res.render("dashboard/dash_index.ejs", {subjects: dashboardShow , todayClasses: dailySchedule,  stats: bioDashInfo});
+    res.render("dashboard/dash_index.ejs", {subjects: dashboardShow , todayClasses: dailySchedule,  stats: bioDashInfo, todayDate: formattedToday()});
 
 
   }catch(err){
@@ -934,11 +938,8 @@ app.get("/attendance/mark", async (req, res) => {
   // console.log("user k saare subjects ka data....");
   // console.log(subjects); 
 
-  const startOfDay = new Date();
-  startOfDay.setHours(0,0,0,0);
-
-  const endOfDay = new Date();
-  endOfDay.setHours(23,59,59,999);
+  const startOfDay = startOfTodayIST();
+const endOfDay = endOfTodayIST();
 
   const todayMark = await dailyMark.find({
     
@@ -963,8 +964,7 @@ app.get("/attendance/mark", async (req, res) => {
 
       // AAj ka day...
 
-      const todayDay = new Date().toLocaleDateString("en-US", {weekday: "long"});
-
+      const todayDay = nowIST().toFormat("cccc");
       // Srif Aaj Waali classes
 
       if(cls.day === todayDay){
@@ -1014,10 +1014,7 @@ app.post("/attendance/mark", async (req, res) => {
 
     console.log("HolidAY BUTOON :", req.body.status);
 
-    const today = new Date();
-    today.setHours(
-      0,0,0,0
-    );
+    const today = startOfTodayIST();
 
     console.log("today:", today);
 
@@ -1027,18 +1024,9 @@ app.post("/attendance/mark", async (req, res) => {
     if (status === "holiday") {
       const subjects = await userSubject.find({ user: req.session.userId});
 
-      const todayDay = new Date().toLocaleDateString("en-US",{ weekday: "long"});
-      console.log("today :" , todayDay);
+      const todayDay = nowIST().toFormat("cccc");
 
-    //   const startofDay = new Date();
-    // startofDay.setHours(
-    //   0,0,0,0
-    // );
-
-    // const endofDay = new Date();
-    // endofDay.setHours(
-    //   23,59,59,999
-    // );
+    
 
       for(let subject of subjects) {
         for(let cls of subject.schedule){

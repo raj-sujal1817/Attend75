@@ -58,7 +58,13 @@
             %>
             <tr>
               <td>
-                <span class="fw-semibold"><%= record.date.toLocaleDateString('en-IN', { weekday:'short', year:'numeric', month:'short', day:'numeric' }) %></span>
+                <span class="fw-semibold"><%= record.date.toLocaleDateString('en-IN', {
+                  timeZone: 'Asia/Kolkata',
+                  weekday:'short',
+                  year:'numeric',
+                  month:'short',
+                  day:'numeric'
+                }) %></span> 
               </td>
               <td><%= record.subjectName %></td>
               <td>
@@ -107,7 +113,13 @@
                 <h6 class="fw-semibold mb-1" style="color:#1e293b;"><%= record.subjectName %></h6>
                 <small class="text-muted">
                   <i class="bi bi-calendar me-1"></i>
-                  <%= record.date.toLocaleDateString('en-IN', { weekday:'long', year:'numeric', month:'short', day:'numeric' }) %>
+                  <%= record.date.toLocaleDateString('en-IN', {
+                    timeZone: 'Asia/Kolkata',
+                    weekday:'long',
+                    year:'numeric',
+                    month:'short',
+                    day:'numeric'
+                  }) %>
                 </small>
               </div>
               <span class="badge rounded-pill fw-semibold" style="background:<%= badgeBg %>;color:<%= badgeTxt %>;">
