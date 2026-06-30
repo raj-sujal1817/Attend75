@@ -43,16 +43,9 @@ const { Stats } = require("fs");
 
 
 
-
-  try {
-
-    mongoose.connect(dbUrl);
-    console.log("CONNECTED");
-    }catch(err){
-      console.log("NOT CONNECTED");
-      console.log(err);
-  }
- 
+mongoose.connect(dbUrl)
+.then(() => console.log("CONNECTED"))
+.catch(err => console.log(err));
 
 
   
@@ -302,7 +295,12 @@ app.get("/dashboard", async (req, res) => {
     
     const userId = req.session.userId;
 
-    const subjects = await userSubject.find({user: userId});
+    
+
+    const [subjects, semInfo] = await Promise.all([
+      userSubject.find({user:userId}),
+      semester.findOne({user:userId})
+    ]);
 
     // console.log(subjects);
 
@@ -356,29 +354,56 @@ app.get("/dashboard", async (req, res) => {
       // each subject ka percentage bta rha....
 
 
-      const presentCount = await dailyMark.countDocuments({
-        user: userId,
-        subject: subject._id,
-        status: "present"
-      });
 
-      const absentCount = await dailyMark.countDocuments({
-        user: userId,
-        subject: subject._id,
-        status: "absent"
-      });
 
-      const holidayCount = await dailyMark.countDocuments({
-        user: userId,
-        subject: subject._id,
-        status: "holiday"
-      });
 
-      const cancelCount = await dailyMark.countDocuments({
-        user: userId,
-        subject: subject._id,
-        status: "cancel"
-      });
+
+
+
+
+    const [
+      presentCount,
+      absentCount,
+      holidayCount,
+      cancelCount
+    ] = await Promise.all([
+
+    dailyMark.countDocuments({
+      user: userId,
+      subject: subject._id,
+      status: "present"
+    }),
+
+    dailyMark.countDocuments({
+      user: userId,
+      subject: subject._id,
+      status: "absent"
+    }),
+
+    dailyMark.countDocuments({
+      user: userId,
+      subject: subject._id,
+      status: "holiday"
+    }),
+
+    dailyMark.countDocuments({
+      user: userId,
+      subject: subject._id,
+      status: "cancel"
+    })
+
+  ]);
+
+
+
+
+
+
+
+
+
+
+
 
       const finalClasses =  subject.totalClasses - holidayCount - cancelCount;
 
@@ -420,7 +445,7 @@ app.get("/dashboard", async (req, res) => {
 
     // Left days in Semester..2
 
-    const semInfo = await semester.findOne({ user: userId});
+   
 
     if(!semInfo) {
       return res.redirect("/semester/setup");
@@ -433,14 +458,14 @@ app.get("/dashboard", async (req, res) => {
 
 
     const exactDate = startOfTodayIST();
-    console.log("exactDate : ", exactDate);
+    // console.log("exactDate : ", exactDate);
 
 
 
       const endDate = startOfDayIST(semInfo.endDate);
       const startDate = startOfDayIST(semInfo.startDate);
 
-      console.log("SEM START DATE : ", startDate);
+      // console.log("SEM START DATE : ", startDate);
 
 
     if(semInfo){
@@ -488,7 +513,7 @@ app.get("/dashboard", async (req, res) => {
 
 
     const workingDays = getWorkingDays(startDate);
-    console.log("Working Days : ", workingDays);
+    // console.log("Working Days : ", workingDays);
 
     // console.log("workingDays:" ,workingDays);
 
@@ -508,7 +533,7 @@ app.get("/dashboard", async (req, res) => {
     );
 
     const userPresentDays = presentDates.length;
-    console.log("presentdays : ", userPresentDays);
+    // console.log("presentdays : ", userPresentDays);
 
     // for total holidays finding...
 
@@ -545,7 +570,7 @@ app.get("/dashboard", async (req, res) => {
         semStartDate : startDate
       }
 
-      console.log("bioDashInfo : ", bioDashInfo);
+      // console.log("bioDashInfo : ", bioDashInfo);
 
 
 
@@ -602,29 +627,38 @@ app.get("/subjects", async (req, res) => {
       // each subject ka percentage bta rha....
 
 
-      const presentCount = await dailyMark.countDocuments({
-        user: userId,
-        subject: subject._id,
-        status: "present"
-      });
+        const [
+        presentCount,
+        absentCount,
+        holidayCount,
+        cancelCount
+      ] = await Promise.all([
 
-      const absentCount = await dailyMark.countDocuments({
-        user: userId,
-        subject: subject._id,
-        status: "absent"
-      });
+        dailyMark.countDocuments({
+          user: userId,
+          subject: subject._id,
+          status: "present"
+        }),
 
-      const holidayCount = await dailyMark.countDocuments({
-        user: userId,
-        subject: subject._id,
-        status: "holiday"
-      });
+        dailyMark.countDocuments({
+          user: userId,
+          subject: subject._id,
+          status: "absent"
+        }),
 
-      const cancelCount = await dailyMark.countDocuments({
-        user: userId,
-        subject: subject._id,
-        status: "cancel"
-      });
+        dailyMark.countDocuments({
+          user: userId,
+          subject: subject._id,
+          status: "holiday"
+        }),
+
+        dailyMark.countDocuments({
+          user: userId,
+          subject: subject._id,
+          status: "cancel"
+        })
+
+      ]);
 
       const finalClasses =  subject.totalClasses - holidayCount - cancelCount;
 
@@ -651,7 +685,7 @@ app.get("/subjects", async (req, res) => {
 
 
 
-      console.log(subjectsList);
+      // console.log(subjectsList);
 
     }
 
@@ -685,11 +719,11 @@ app.post("/subjects", async (req, res) => {
 
     const Semester = await semester.findOne({ user: req.session.userId});
 
-    console.log(Semester);
+    // console.log(Semester);
 
      const totalClasses =  calculateTotalClasses(subject, Semester);
-     console.log("HELLO WORLD");
-     console.log(totalClasses);
+    //  console.log("HELLO WORLD");
+    //  console.log(totalClasses);
      subject.totalClasses = totalClasses;
      
 
@@ -737,8 +771,8 @@ app.get("/subjects/:id/edit", async (req, res) => {
         user: req.session.userId
       }
     );
-    console.log("HERE, IM HERE");
-    console.log(editSub);
+    // console.log("HERE, IM HERE");
+    // console.log(editSub);
 
     const userId = req.session.userId;
 
@@ -749,29 +783,38 @@ app.get("/subjects/:id/edit", async (req, res) => {
 
     if(editSub) {
 
-      const presentCount = await dailyMark.countDocuments({
-        user: userId,
-        subject: editSub._id,
-        status: "present"
-      });
+        const [
+        presentCount,
+        absentCount,
+        holidayCount,
+        cancelCount
+      ] = await Promise.all([
 
-      const absentCount = await dailyMark.countDocuments({
-        user: userId,
-        subject: editSub._id,
-        status: "absent"
-      });
+        dailyMark.countDocuments({
+          user: userId,
+          subject: subject._id,
+          status: "present"
+        }),
 
-      const holidayCount = await dailyMark.countDocuments({
-        user: userId,
-        subject: editSub._id,
-        status: "holiday"
-      });
+        dailyMark.countDocuments({
+          user: userId,
+          subject: subject._id,
+          status: "absent"
+        }),
 
-      const cancelCount = await dailyMark.countDocuments({
-        user: userId,
-        subject: editSub._id,
-        status: "cancel"
-      });
+        dailyMark.countDocuments({
+          user: userId,
+          subject: subject._id,
+          status: "holiday"
+        }),
+
+        dailyMark.countDocuments({
+          user: userId,
+          subject: subject._id,
+          status: "cancel"
+        })
+
+      ]);
 
       const finalClasses =  editSub.totalClasses - holidayCount - cancelCount;
 
@@ -798,7 +841,7 @@ app.get("/subjects/:id/edit", async (req, res) => {
 
 
 
-      console.log(subjectsList);
+      // console.log(subjectsList);
 
     }
 
@@ -833,13 +876,13 @@ app.post("/subjects/:id", async (req, res) => {
     const semInfo = await semester.findOne({user: req.session.userId});
 
     const totalClasses = await attendanceCalculator(updateData, semInfo);
-    console.log(totalClasses);
+    // console.log(totalClasses);
 
     updateData.totalClasses = totalClasses;
 
-    console.log(updateData);
+    // console.log(updateData);
 
-    console.log(updateData.name);
+    // console.log(updateData.name);
 
 
 
@@ -1012,11 +1055,11 @@ app.post("/attendance/mark", async (req, res) => {
     } = req.body;
 
 
-    console.log("HolidAY BUTOON :", req.body.status);
+    // console.log("HolidAY BUTOON :", req.body.status);
 
     const today = startOfTodayIST();
 
-    console.log("today:", today);
+    // console.log("today:", today);
 
     // =========================================
     //   <<<<< SPECIAL CASE IF HOLIDAY >>>>>
@@ -1030,8 +1073,8 @@ app.post("/attendance/mark", async (req, res) => {
 
       for(let subject of subjects) {
         for(let cls of subject.schedule){
-          console.log("CLS.DAY", cls.day);
-          console.log("CLS.STARTtime: ", cls.start);
+          // console.log("CLS.DAY", cls.day);
+          // console.log("CLS.STARTtime: ", cls.start);
           if(cls.day === todayDay){
             const result = await dailyMark.findOneAndUpdate(
               {
@@ -1096,7 +1139,7 @@ app.post("/attendance/mark", async (req, res) => {
 
       // Same status Hai 
       if(existingRecord.status === status) {
-        console.log("NO UPDATE");
+        // console.log("NO UPDATE");
         existingRecord.subjectName = subjectName;
 
         return res.redirect("/attendance/mark");
@@ -1106,7 +1149,7 @@ app.post("/attendance/mark", async (req, res) => {
       existingRecord.status = status;
       existingRecord.subjectName = subjectName;
 
-      console.log("UPDATED");
+      // console.log("UPDATED");
 
       await existingRecord.save();
     }
@@ -1114,7 +1157,7 @@ app.post("/attendance/mark", async (req, res) => {
     // Ydi record nhi mila ....
 
     else {
-      console.log("created");
+      // console.log("created");
 
       await dailyMark.create({
 
@@ -1136,8 +1179,8 @@ app.post("/attendance/mark", async (req, res) => {
       
 
     }
-    console.log("HERE, existingRecord DATA IS PRESENT");
-    console.log(existingRecord);
+    // console.log("HERE, existingRecord DATA IS PRESENT");
+    // console.log(existingRecord);
     res.redirect("/attendance/mark");
 
 
@@ -1165,7 +1208,7 @@ app.get("/attendance/history", async (req, res) => {
 
   res.render("attendance/history.ejs", {attendanceHistory: history});
 
-  console.log("AttendanceHistory : ", history);
+  // console.log("AttendanceHistory : ", history);
 });
 
 
